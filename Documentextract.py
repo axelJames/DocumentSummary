@@ -18,6 +18,8 @@ class Sentence(object):
     def __init__(self, text, score=0):
         self.text = text
         self.score = score
+        if len(self.text.split()) <= 6:
+            self.score -= 4
         self.SummeryPhrases()
     def __str__(self):
         ret = "text= {} \nscore= {} \n".format(self.text, self.score)
@@ -56,6 +58,8 @@ class Paragraph(object):
         self.words = self.repetitionWord(words)
         self.NamedEntity()
         self.sentences = self.FindSentences(self.text)
+        self.summary = self.FindSummary()
+        print self.summary
     def FindSentences(self, text):
         q = find_all(text, ".")
         sentenses = []
@@ -65,7 +69,6 @@ class Paragraph(object):
             sentence.Updatescore(self.words)
             sentenses.append(sentence)
             i_prev = i+1
-        print sentenses
         return sentenses
     @staticmethod
     def repetitionWord(words):
@@ -91,7 +94,23 @@ class Paragraph(object):
             if words[i].lower() in StopWord:
                 words[i] = "-"
         return words
-
+    def FindSummary(self):
+        scorelist = [x.score for x in self.sentences]
+        scorelist.sort()
+        scorelist = scorelist[::-1]
+        summary = []
+        i_start = scorelist[0]
+        for i in scorelist:
+            if i_start - i > 3.5:
+                break
+            for sentence in self.sentences:
+                if sentence.score == i:
+                    summary.append(sentence)
+                    break
+        return summary
+                    
+        
+        
 class Word(object):
     def __init__(self, word):
         self.text = word
@@ -103,5 +122,6 @@ class Word(object):
     def AddRepeat(self, count):
         self.repeat += count
         self.UpdateScore(self.score)
+        
 if __name__ == "__main__":
     ExtractDocument("Document.txt")
