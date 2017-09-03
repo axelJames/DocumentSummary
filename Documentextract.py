@@ -3,6 +3,8 @@ def ExtractDocument(File):
     inputfile = open(File, "r")
     content = inputfile.read()
     paragraph = Paragraph(content)
+    print "The Summary\n"
+    print ".".join([x.text for x in paragraph.summary]) + "."
 
 
 def find_all(a_str, sub):
@@ -21,10 +23,10 @@ class Sentence(object):
         if len(self.text.split()) <= 6:
             self.score -= 4
         self.SummeryPhrases()
-    def __str__(self):
-        ret = "text= {} \nscore= {} \n".format(self.text, self.score)
-        return ret        
-    __repr__ = __str__
+    # def __str__(self):    ## for debugging
+    #     ret = "text= {} \nscore= {} \n".format(self.text, self.score)
+    #     return ret        
+    # __repr__ = __str__
     def SummeryPhrases(self):
         summ_phra = ["after all",
                      "all in all",
@@ -59,7 +61,6 @@ class Paragraph(object):
         self.NamedEntity()
         self.sentences = self.FindSentences(self.text)
         self.summary = self.FindSummary()
-        print self.summary
     def FindSentences(self, text):
         q = find_all(text, ".")
         sentenses = []
