@@ -1,12 +1,8 @@
-import string
 
 def ExtractDocument(File):
     inputfile = open(File, "r")
     content = inputfile.read()
-    para = content.splitlines()
-    paragraph = []
-    for text in para:
-        paragraph.append(Paragraph(text))
+    paragraph = Paragraph(content)
 
 
 def find_all(a_str, sub):
@@ -19,26 +15,12 @@ def find_all(a_str, sub):
         start += len(sub)
 
 class Sentence(object):
-    def __init__(self, text, score=0, Named_Entities=None):
+    def __init__(self, text, score=0):
         self.text = text
         self.score = score
-        self.words = self.RemoveStopword()
         self.SummeryPhrases()
-        for word in self.words:
-            if word in Named_Entities.keys():
-                self.score += Named_Entities[word]
-                
-    def RemoveStopword(self):
-        wordsfile = open("StopWords.txt", "r")
-        Stopword = wordsfile.read()
-        StopWord = Stopword.splitlines()
-        words = self.text.split()
-        for i in range(len(words)):
-            if words[i].lower() in StopWord:
-                words[i] = "-"
-        return words
     def __str__(self):
-        ret = "text= {} \nscore= {} \nwords={}\n".format(self.text, self.score, self.words)
+        ret = "text= {} \nscore= {} \n".format(self.text, self.score)
         return ret        
     __repr__ = __str__
     def SummeryPhrases(self):
@@ -61,42 +43,65 @@ class Sentence(object):
                      "finally"]
         for phrase in summ_phra:
             if phrase in self.text:
-                self.score += 5    
-            
+                self.score += 10
+    def Updatescore(self, words):
+        for word in words.keys():
+            if word in self.text:
+                self.score += words[word].score
+                
 class Paragraph(object):
-    def __init__(self,text):
-        self.text = text
-        self.Named_Entities = self.repetitionWord()
-        self.sentences = self.FindSentences(text)
+    def __init__(self,content):
+        self.text = " ".join(content.splitlines())
+        words = self.RemoveStopword()
+        self.words = self.repetitionWord(words)
+        self.NamedEntity()
+        self.sentences = self.FindSentences(self.text)
     def FindSentences(self, text):
         q = find_all(text, ".")
-        sen = []
+        sentenses = []
         i_prev = 0
         for i in q:
-            sen.append(Sentence(text[i_prev:i], 10 if (i_prev == 0 or i==(len(text)-1)) else 0, self.Named_Entities))
+            sentence = Sentence(text[i_prev:i], 5 if (i_prev == 0 or i==(len(text)-1)) else 0)
+            sentence.Updatescore(self.words)
+            sentenses.append(sentence)
             i_prev = i+1
-        print sen
-        return sen
-    def repetitionWord(self):
-        words = self.text.split()
-        Name_Entities = self.NamedEntity()
-        wordset = {}
-        for word in words:
-            if word in Name_Entities:
-                if word in wordset:
-                    wordset[word]+=1
-                else:
-                    wordset[word]=1
-        return wordset
+        print sentenses
+        return sentenses
+    @staticmethod
+    def repetitionWord(words):
+        WordsSet = {}
+        for word in set(words):
+            if word == "-":
+                continue
+            WordsSet[word] = Word(word)
+            WordsSet[word].AddRepeat(words.count(word))
+        return WordsSet
     def NamedEntity(self):
-        list1 = []
-        words = self.text.split()
-        for word in words:
+        for word in self.words.keys():
             if word[0].isupper():
-                list1.append(word)
-        return list1
-    
+                self.words[word].Name_Entity = True
+                self.words[word].UpdateScore(1.5)
+                
+    def RemoveStopword(self):
+        wordsfile = open("StopWords.txt", "r")
+        Stopword = wordsfile.read()
+        StopWord = Stopword.splitlines()
+        words = self.text.split()
+        for i in range(len(words)):
+            if words[i].lower() in StopWord:
+                words[i] = "-"
+        return words
 
-
+class Word(object):
+    def __init__(self, word):
+        self.text = word
+        self.repeat = 0
+        self.score = 0.5
+        self.Named_Entity = False
+    def UpdateScore(self, score):
+        self.score = score * self.repeat
+    def AddRepeat(self, count):
+        self.repeat += count
+        self.UpdateScore(self.score)
 if __name__ == "__main__":
     ExtractDocument("Document.txt")
