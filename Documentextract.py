@@ -1,4 +1,4 @@
-
+import sys
 def ExtractDocument(File):
     inputfile = open(File, "r")
     content = inputfile.read()
@@ -6,15 +6,21 @@ def ExtractDocument(File):
     print "The Summary\n"
     print ".".join([x.text for x in paragraph.summary]) + "."
 
-
-def find_all(a_str, sub):
+def find_all(a_str, Substr_set):
+    s_ret = []
+    for s_str in Substr_set:
+        s_ret += list(find(a_str, s_str))
+    s_ret.sort()
+    return s_ret
+    
+def find(a_str, substring):
     start = 0
     while True:
-        start = a_str.find(sub, start)
+        start = a_str.find(substring, start)
         if start == -1:
             break
         yield start
-        start += len(sub)
+        start += len(substring)
 
 class Sentence(object):
     def __init__(self, text, score=0):
@@ -62,11 +68,11 @@ class Paragraph(object):
         self.sentences = self.FindSentences(self.text)
         self.summary = self.FindSummary()
     def FindSentences(self, text):
-        q = find_all(text, ".")
+        q = find_all(text, [".", "?"])
         sentenses = []
         i_prev = 0
         for i in q:
-            sentence = Sentence(text[i_prev:i], 5 if (i_prev == 0 or i==(len(text)-1)) else 0)
+            sentence = Sentence(text[i_prev:i], 10 if (i_prev == 0 or i==(len(text)-1)) else 0)
             sentence.Updatescore(self.words)
             sentenses.append(sentence)
             i_prev = i+1
@@ -84,7 +90,7 @@ class Paragraph(object):
         for word in self.words.keys():
             if word[0].isupper():
                 self.words[word].Name_Entity = True
-                self.words[word].UpdateScore(1.5)
+                self.words[word].UpdateScore(0.5)
                 
     def RemoveStopword(self):
         wordsfile = open("StopWords.txt", "r")
@@ -110,8 +116,6 @@ class Paragraph(object):
                     break
         return summary
                     
-        
-        
 class Word(object):
     def __init__(self, word):
         self.text = word
@@ -119,10 +123,10 @@ class Word(object):
         self.score = 0.5
         self.Named_Entity = False
     def UpdateScore(self, score):
-        self.score = score * self.repeat
-    def AddRepeat(self, count):
+        self.score += score * self.repeat
+    def AddRepeat(self, count, score=0.2):
         self.repeat += count
-        self.UpdateScore(self.score)
+        self.UpdateScore(score)
         
 if __name__ == "__main__":
-    ExtractDocument("Document.txt")
+    ExtractDocument(sys.argv[1])
