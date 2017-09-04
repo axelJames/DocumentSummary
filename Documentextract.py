@@ -72,7 +72,7 @@ class Paragraph(object):
         sentenses = []
         i_prev = 0
         for i in q:
-            sentence = Sentence(text[i_prev:i], 5 if (i_prev == 0 or i==(len(text)-1)) else 0)
+            sentence = Sentence(text[i_prev:i], 10 if (i_prev == 0 or i==(len(text)-1)) else 0)
             sentence.Updatescore(self.words)
             sentenses.append(sentence)
             i_prev = i+1
