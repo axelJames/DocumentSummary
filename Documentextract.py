@@ -6,15 +6,21 @@ def ExtractDocument(File):
     print "The Summary\n"
     print ".".join([x.text for x in paragraph.summary]) + "."
 
-
-def find_all(a_str, sub):
+def find_all(a_str, Substr_set):
+    s_ret = []
+    for s_str in Substr_set:
+        s_ret += list(find(a_str, s_str))
+    s_ret.sort()
+    return s_ret
+    
+def find(a_str, substring):
     start = 0
     while True:
-        start = a_str.find(sub, start)
+        start = a_str.find(substring, start)
         if start == -1:
             break
         yield start
-        start += len(sub)
+        start += len(substring)
 
 class Sentence(object):
     def __init__(self, text, score=0):
@@ -62,7 +68,7 @@ class Paragraph(object):
         self.sentences = self.FindSentences(self.text)
         self.summary = self.FindSummary()
     def FindSentences(self, text):
-        q = find_all(text, ".")
+        q = find_all(text, [".", "?"])
         sentenses = []
         i_prev = 0
         for i in q:
@@ -110,8 +116,6 @@ class Paragraph(object):
                     break
         return summary
                     
-        
-        
 class Word(object):
     def __init__(self, word):
         self.text = word
