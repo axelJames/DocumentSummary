@@ -1,4 +1,4 @@
-
+import sys
 def ExtractDocument(File):
     inputfile = open(File, "r")
     content = inputfile.read()
@@ -84,7 +84,7 @@ class Paragraph(object):
         for word in self.words.keys():
             if word[0].isupper():
                 self.words[word].Name_Entity = True
-                self.words[word].UpdateScore(1.5)
+                self.words[word].UpdateScore(0.5)
                 
     def RemoveStopword(self):
         wordsfile = open("StopWords.txt", "r")
@@ -119,10 +119,10 @@ class Word(object):
         self.score = 0.5
         self.Named_Entity = False
     def UpdateScore(self, score):
-        self.score = score * self.repeat
-    def AddRepeat(self, count):
+        self.score += score * self.repeat
+    def AddRepeat(self, count, score=0.2):
         self.repeat += count
-        self.UpdateScore(self.score)
+        self.UpdateScore(score)
         
 if __name__ == "__main__":
-    ExtractDocument("Document.txt")
+    ExtractDocument(sys.argv[1])
