@@ -1,5 +1,8 @@
 import sys
 def ExtractDocument(File):
+    """
+    Takes input file and prints the summary
+    """
     inputfile = open(File, "r")
     content = inputfile.read()
     paragraph = Paragraph(content)
@@ -7,6 +10,9 @@ def ExtractDocument(File):
     print ".".join([x.text for x in paragraph.summary]) + "."
 
 def find_all(a_str, Substr_set):
+    """
+    finds the positions of the substring in substing set from a_str
+    """
     s_ret = []
     for s_str in Substr_set:
         s_ret += list(find(a_str, s_str))
@@ -14,6 +20,9 @@ def find_all(a_str, Substr_set):
     return s_ret
     
 def find(a_str, substring):
+    """
+    Find positions of the substring in the a_str
+    """
     start = 0
     while True:
         start = a_str.find(substring, start)
@@ -23,6 +32,9 @@ def find(a_str, substring):
         start += len(substring)
 
 class Sentence(object):
+    """
+    Class which represents Sentence
+    """
     def __init__(self, text, score=0):
         self.text = text
         self.score = score
@@ -34,6 +46,9 @@ class Sentence(object):
     #     return ret        
     # __repr__ = __str__
     def SummeryPhrases(self):
+        """
+        Increses score of the sentences in case of summary phrases
+        """
         summ_phra = ["after all",
                      "all in all",
                      "all things considered",
@@ -52,14 +67,21 @@ class Sentence(object):
                      "to summarize",
                      "finally"]
         for phrase in summ_phra:
-            if phrase in self.text:
+            if phrase in self.text.lower():
                 self.score += 10
+                
     def Updatescore(self, words):
+        """
+        updates the score of sentence using score of words
+        """
         for word in words.keys():
             if word in self.text:
                 self.score += words[word].score
                 
 class Paragraph(object):
+    """
+    class which reresents Pargraph/ document
+    """
     def __init__(self,content):
         self.text = " ".join(content.splitlines())
         words = self.RemoveStopword()
@@ -68,6 +90,9 @@ class Paragraph(object):
         self.sentences = self.FindSentences(self.text)
         self.summary = self.FindSummary()
     def FindSentences(self, text):
+        """
+        Divide text into sentences
+        """
         q = find_all(text, [".", "?"])
         sentenses = []
         i_prev = 0
@@ -79,6 +104,9 @@ class Paragraph(object):
         return sentenses
     @staticmethod
     def repetitionWord(words):
+        """
+        Finding how many times a word repeats 
+        """
         WordsSet = {}
         for word in set(words):
             if word == "-":
@@ -87,12 +115,18 @@ class Paragraph(object):
             WordsSet[word].AddRepeat(words.count(word))
         return WordsSet
     def NamedEntity(self):
+        """
+        Finding Named Entity Words
+        """
         for word in self.words.keys():
             if word[0].isupper():
                 self.words[word].Name_Entity = True
                 self.words[word].UpdateScore(0.5)
                 
     def RemoveStopword(self):
+        """
+        Removes Stopword from the text
+        """
         wordsfile = open("StopWords.txt", "r")
         Stopword = wordsfile.read()
         StopWord = Stopword.splitlines()
@@ -102,6 +136,9 @@ class Paragraph(object):
                 words[i] = "-"
         return words
     def FindSummary(self):
+        """
+        Sorts sentence based on scores gives summary
+        """
         scorelist = [x.score for x in self.sentences]
         scorelist.sort()
         scorelist = scorelist[::-1]
