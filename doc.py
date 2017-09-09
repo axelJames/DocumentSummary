@@ -9,8 +9,14 @@ Created on Thu Sep  7 10:59:08 2017
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+import re
 
-inputfile = open("Document.txt", "r").read()
+inputfile = open("Document.txt", "r").read()inputfile = inputfile.replace('”','"').replace('“','"')
+inputfile = re.sub(r'"\s*(?=[A-Z])',r'" .',inputfile)
+inputfile = re.sub(r'"(?=\n)','" .',inputfile)
+inputfile = inputfile.replace('”','"').replace('“','"')
+inputfile = re.sub(r'"\s*(?=[A-Z])',r'" .',inputfile)
+inputfile = re.sub(r'"(?=\n)','" .',inputfile)
 sentences = sent_tokenize(inputfile)
 summ_phra = ["after all",
                      "all in all",
