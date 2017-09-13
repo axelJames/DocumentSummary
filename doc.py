@@ -11,9 +11,7 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import re
 
-inputfile = open("Document.txt", "r").read()inputfile = inputfile.replace('”','"').replace('“','"')
-inputfile = re.sub(r'"\s*(?=[A-Z])',r'" .',inputfile)
-inputfile = re.sub(r'"(?=\n)','" .',inputfile)
+inputfile = open("Document.txt", "r").read()
 inputfile = inputfile.replace('”','"').replace('“','"')
 inputfile = re.sub(r'"\s*(?=[A-Z])',r'" .',inputfile)
 inputfile = re.sub(r'"(?=\n)','" .',inputfile)
