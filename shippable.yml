@@ -1,0 +1,4 @@
+language: none
+build:
+  ci:
+    - python Documentextract.py TestFiles/Indiannews.txt 
