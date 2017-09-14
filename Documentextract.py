@@ -2,19 +2,23 @@
 import sys
 import nltk
 import string
+import os
 from collections import namedtuple
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import re
 
-Sentence = namedtuple('Sentence', ['text', 'wordset','Named_Entity_count', 'Summary_phrase_count'])
+Sentence = namedtuple('Sentence', ['text', 'wordset','pos','Named_Entity_count','Numerical_count', 'Summary_phrase_count'])
+SenNode = namedtuple('SenNode', ['score', 'sentence'])
+
 def ExtractDocument(File):
     """
     Takes input file and prints the summary
     """
     with open(File, "r") as inputfile:
         content = inputfile.read()
+    content = " ".join(content.splitlines())
     content = content.replace('”','"').replace('“','"')
     sentences = sent_tokenize(content.decode('utf-8'))
     word_tokens = [word for word in word_tokenize(content.decode("utf-8"))
@@ -23,21 +27,39 @@ def ExtractDocument(File):
     words = nltk.pos_tag(word_tokens)
     wordset = repetitionWord(words)
     sen = []
+    pos = 0
     for sentence in sentences:
         summ = SummeryPhrases(sentence)
         senwordSet={}
         for word in wordset.keys():
             if word[0] in sentence:
                 senwordSet[word] = wordset[word]
-        # Finding Named Entity Words
-        Num_Named_entity= 0
+        if len(senwordSet) < 5: #removing short sentences
+            continue
+        # Finding Named Entity and number Words
+        Num_Named_entity= []
+        Num_Numbers = 0
         for word in senwordSet:
             if word[1]=="NNP":
-                Num_Named_entity += 1
-        sen.append(Sentence(sentence, senwordSet, Num_Named_entity, summ))
+                Num_Named_entity.append(word)
+            if word[1]=="CD":
+                Num_Numbers +=1
+        sen.append(Sentence(sentence, senwordSet, pos, Num_Named_entity, Num_Numbers, summ))
+        if pos <3:
+            pos +=1
+        else:
+            pos=0
+    score={}
+    Sentences=[]
     for i in sen:
-        print i
-    print "The Summary\n"
+        word_count = float(len(i.wordset.keys()))
+        score = ((3-i.pos)/3.0)*1 + (len(i.Named_Entity_count)/word_count)*3 + (i.Numerical_count)*0.75 + (i.Summary_phrase_count)*2 + (word_count)*0.1
+        Sentences.append(SenNode(score, i))
+    sort_score = sorted(Sentences, reverse=True)
+    summary = []
+    for i in range(len(sort_score)*3/10 + 1):
+        summary.append(sort_score[i].sentence.text)
+    return "\n".join(summary)
     
 
 def SummeryPhrases(text, score = 0):
@@ -79,4 +101,13 @@ def repetitionWord(words):
     return WordsSet
  
 if __name__ == "__main__":
-    ExtractDocument(sys.argv[1])
+    path = raw_input("Enter the path to a directory containing text files: ")
+    output_path = raw_input("Enter the path to a directory for output: ")
+    for filename in os.listdir(path):
+        filepath = os.path.join(path, filename)
+        if not os.path.exists(output_path):
+            os.makedirs(output_path);
+        output = os.path.join(output_path, filename)
+        summary = ExtractDocument(filepath)
+        fp = open(output, "w+")
+        fp.write(summary.encode('utf8'))
