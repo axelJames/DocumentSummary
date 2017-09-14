@@ -1,169 +1,82 @@
+# -*- coding: utf-8 -*-
 import sys
+import nltk
+import string
+from collections import namedtuple
+from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+import re
+
+Sentence = namedtuple('Sentence', ['text', 'wordset','Named_Entity_count', 'Summary_phrase_count'])
 def ExtractDocument(File):
     """
     Takes input file and prints the summary
     """
-    inputfile = open(File, "r")
-    content = inputfile.read()
-    paragraph = Paragraph(content)
+    with open(File, "r") as inputfile:
+        content = inputfile.read()
+    content = content.replace('”','"').replace('“','"')
+    sentences = sent_tokenize(content.decode('utf-8'))
+    word_tokens = [word for word in word_tokenize(content.decode("utf-8"))
+                   if word not in stopwords.words('english')
+                   and word not in string.punctuation ]
+    words = nltk.pos_tag(word_tokens)
+    wordset = repetitionWord(words)
+    sen = []
+    for sentence in sentences:
+        summ = SummeryPhrases(sentence)
+        senwordSet={}
+        for word in wordset.keys():
+            if word[0] in sentence:
+                senwordSet[word] = wordset[word]
+        # Finding Named Entity Words
+        Num_Named_entity= 0
+        for word in senwordSet:
+            if word[1]=="NNP":
+                Num_Named_entity += 1
+        sen.append(Sentence(sentence, senwordSet, Num_Named_entity, summ))
+    for i in sen:
+        print i
     print "The Summary\n"
-    print ".".join([x.text for x in paragraph.summary]) + "."
-
-def find_all(a_str, Substr_set):
-    """
-    finds the positions of the substring in substing set from a_str
-    """
-    s_ret = []
-    for s_str in Substr_set:
-        s_ret += list(find(a_str, s_str))
-    s_ret.sort()
-    return s_ret
     
-def find(a_str, substring):
-    """
-    Find positions of the substring in the a_str
-    """
-    start = 0
-    while True:
-        start = a_str.find(substring, start)
-        if start == -1:
-            break
-        yield start
-        start += len(substring)
 
-class Sentence(object):
+def SummeryPhrases(text, score = 0):
     """
-    Class which represents Sentence
+    Increses score of the sentences in case of summary phrases
     """
-    def __init__(self, text, score=0):
-        self.text = text
-        self.score = score
-        if len(self.text.split()) <= 6:
-            self.score -= 4
-        self.SummeryPhrases()
-    # def __str__(self):    ## for debugging
-    #     ret = "text= {} \nscore= {} \n".format(self.text, self.score)
-    #     return ret        
-    # __repr__ = __str__
-    def SummeryPhrases(self):
-        """
-        Increses score of the sentences in case of summary phrases
-        """
-        summ_phra = ["after all",
-                     "all in all",
-                     "all things considered",
-                     "briefly",
-                     "by and large",
-                     "in any case",
-                     "in any event",
-                     "in brief",
-                     "in conclusion",
-                     "on the whole",
-                     "in short",
-                     "in summary",
-                     "in the final analysis",
-                     "in the long run, on balance",
-                     "to sum up",
-                     "to summarize",
-                     "finally"]
-        for phrase in summ_phra:
-            if phrase in self.text.lower():
-                self.score += 10
-                
-    def Updatescore(self, words):
-        """
-        updates the score of sentence using score of words
-        """
-        for word in words.keys():
-            if word in self.text:
-                self.score += words[word].score
-                
-class Paragraph(object):
+    summ_phra = [u"after all",
+                 u"all in all",
+                 u"all things considered",
+                 u"briefly",
+                 u"by and large",
+                 u"in any case",
+                 u"in any event",
+                 u"in brief",
+                 u"in conclusion",
+                 u"on the whole",
+                 u"in short",
+                 u"in summary",
+                 u"in the final analysis",
+                 u"in the long run, on balance",
+                 u"to sum up",
+                 u"to summarize",
+                 u"finally"]
+    count = 0
+    for phrase in summ_phra:
+        if phrase in text.lower():
+            count +=1
+    return count
+
+def repetitionWord(words):
     """
-    class which reresents Pargraph/ document
+    Finding how many times a word repeats 
     """
-    def __init__(self,content):
-        self.text = " ".join(content.splitlines())
-        words = self.RemoveStopword()
-        self.words = self.repetitionWord(words)
-        self.NamedEntity()
-        self.sentences = self.FindSentences(self.text)
-        self.summary = self.FindSummary()
-    def FindSentences(self, text):
-        """
-        Divide text into sentences
-        """
-        q = find_all(text, [".", "?"])
-        sentenses = []
-        i_prev = 0
-        for i in q:
-            sentence = Sentence(text[i_prev:i], 10 if (i_prev == 0 or i==(len(text)-1)) else 0)
-            sentence.Updatescore(self.words)
-            sentenses.append(sentence)
-            i_prev = i+1
-        return sentenses
-    @staticmethod
-    def repetitionWord(words):
-        """
-        Finding how many times a word repeats 
-        """
-        WordsSet = {}
-        for word in set(words):
-            if word == "-":
-                continue
-            WordsSet[word] = Word(word)
-            WordsSet[word].AddRepeat(words.count(word))
-        return WordsSet
-    def NamedEntity(self):
-        """
-        Finding Named Entity Words
-        """
-        for word in self.words.keys():
-            if word[0].isupper():
-                self.words[word].Name_Entity = True
-                self.words[word].UpdateScore(0.5)
-                
-    def RemoveStopword(self):
-        """
-        Removes Stopword from the text
-        """
-        wordsfile = open("StopWords.txt", "r")
-        Stopword = wordsfile.read()
-        StopWord = Stopword.splitlines()
-        words = self.text.split()
-        for i in range(len(words)):
-            if words[i].lower() in StopWord:
-                words[i] = "-"
-        return words
-    def FindSummary(self):
-        """
-        Sorts sentence based on scores gives summary
-        """
-        scorelist = [x.score for x in self.sentences]
-        scorelist.sort()
-        scorelist = scorelist[::-1]
-        summary = []
-        i_start = scorelist[0]
-        for i in scorelist:
-            if i_start - i > 3.5:
-                break
-            for sentence in self.sentences:
-                if sentence.score == i:
-                    summary.append(sentence)
-                    break
-        return summary
-                    
-class Word(object):
-    def __init__(self, word):
-        self.text = word
-        self.repeat = 0
-        self.score = 0.5
-        self.Named_Entity = False
-    def UpdateScore(self, score):
-        self.score += score * self.repeat
-    def AddRepeat(self, count, score=0.2):
-        self.repeat += count
-        self.UpdateScore(score)
-        
+    WordsSet = {}
+    for word in set(words):
+        if word[0] in stopwords.words('english'):
+            continue
+        WordsSet[word] = words.count(word)
+    return WordsSet
+ 
 if __name__ == "__main__":
     ExtractDocument(sys.argv[1])
