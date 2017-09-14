@@ -1,4 +1,4 @@
 language: none
 build:
   ci:
-    - python Documentextract.py 
+    - echo -e "TestFiles\nOut" | python Summarization.py

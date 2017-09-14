@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+Document Summarization
+Team Members:
+1. Axel James
+2. Jude K Anil
+3. Libin N George
+"""
 import sys
 import nltk
 import string
