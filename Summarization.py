@@ -25,7 +25,6 @@ def ExtractDocument(File):
     """
     with open(File, "r") as inputfile:
         content = inputfile.read()
-    content = " ".join(content.splitlines())
     content = content.replace('”','"').replace('“','"')
     sentences = sent_tokenize(content.decode('utf-8'))
     word_tokens = [word for word in word_tokenize(content.decode("utf-8"))
@@ -39,7 +38,7 @@ def ExtractDocument(File):
         summ = SummeryPhrases(sentence)
         senwordSet={}
         for word in wordset.keys():
-            if word[0] in sentence:
+            if (" "+ word[0] +" ") in sentence:
                 senwordSet[word] = wordset[word]
         if len(senwordSet) < 5: #removing short sentences
             continue
@@ -60,7 +59,11 @@ def ExtractDocument(File):
     Sentences=[]
     for i in sen:
         word_count = float(len(i.wordset.keys()))
-        score = ((3-i.pos)/3.0)*1 + (len(i.Named_Entity_count)/word_count)*3 + (i.Numerical_count)*0.75 + (i.Summary_phrase_count)*2 + (word_count)*0.1
+        score = ((3-i.pos)/3.0)*1
+        + (len(i.Named_Entity_count)/word_count)*3
+        + (i.Numerical_count)*0.75
+        + (i.Summary_phrase_count)*2
+        + (word_count)*0.1
         Sentences.append(SenNode(score, i))
     sort_score = sorted(Sentences, reverse=True)
     summary = []
